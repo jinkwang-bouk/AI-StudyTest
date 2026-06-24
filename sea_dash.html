@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>유형별 해양사고 현황 대시보드</title>
+  <style>
+    :root {
+      --bg-0: #061826;
+      --bg-1: #092f4c;
+      --bg-2: #eaf8ff;
+      --panel: rgba(255, 255, 255, .86);
+      --panel-solid: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: rgba(148, 163, 184, .28);
+      --brand: #0284c7;
+      --brand-2: #14b8a6;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --success: #10b981;
+      --violet: #8b5cf6;
+      --shadow: 0 22px 60px rgba(2, 8, 23, .13);
+      --shadow-soft: 0 12px 35px rgba(15, 23, 42, .08);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Pretendard, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(20, 184, 166, .18), transparent 28%),
+        radial-gradient(circle at 90% 0%, rgba(59, 130, 246, .20), transparent 32%),
+        linear-gradient(180deg, #071827 0%, #0b3553 270px, #eef8fb 271px, #f7fbff 100%);
+      min-height: 100vh;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      padding: 34px 20px 92px;
+    }
+    .hero::before, .hero::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      width: 150vw;
+      height: 150vw;
+      min-width: 900px;
+      min-height: 900px;
+      border-radius: 43% 47% 44% 46%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .hero::before {
+      bottom: -142vw;
+      background: rgba(255, 255, 255, .14);
+      animation: tide 18s linear infinite;
+    }
+    .hero::after {
+      bottom: -146vw;
+      background: rgba(255, 255, 255, .09);
+      animation: tide 25s linear infinite reverse;
+    }
+    @keyframes tide { to { transform: translateX(-50%) rotate(360deg); } }
+    .wrap { max-width: 1220px; margin: 0 auto; position: relative; z-index: 1; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 34px; }
+    .brandmark { display: flex; align-items: center; gap: 12px; font-weight: 850; letter-spacing: -.01em; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 16px;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.07));
+      border: 1px solid rgba(255,255,255,.26);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 18px 45px rgba(0,0,0,.16);
+    }
+    .status-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-radius: 999px;
+      background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22);
+      backdrop-filter: blur(12px); color: rgba(255,255,255,.93); font-weight: 750; font-size: 13px;
+    }
+    .status-dot { width: 9px; height: 9px; border-radius: 999px; background: #34d399; box-shadow: 0 0 0 6px rgba(52,211,153,.16); }
+    .hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; align-items: center; gap: 36px; }
+    .kicker { letter-spacing: .16em; text-transform: uppercase; font-size: 12px; opacity: .85; margin-bottom: 12px; font-weight: 850; }
+    h1 { margin: 0; font-size: clamp(31px, 5vw, 58px); line-height: 1.06; letter-spacing: -.05em; }
+    .subtitle { margin: 18px 0 0; max-width: 780px; color: rgba(255,255,255,.82); font-size: 17px; line-height: 1.7; }
+    .header-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+    .pill { border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.12); padding: 10px 14px; border-radius: 999px; font-weight: 800; backdrop-filter: blur(10px); }
+    .radar-card {
+      position: relative; min-height: 285px; border-radius: 32px; overflow: hidden;
+      background: linear-gradient(145deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.22);
+      box-shadow: 0 35px 90px rgba(0,0,0,.18);
+      backdrop-filter: blur(18px);
+    }
+    .radar-sweep {
+      position: absolute; inset: 34px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(circle, transparent 0 22%, rgba(255,255,255,.10) 23% 24%, transparent 25% 45%, rgba(255,255,255,.10) 46% 47%, transparent 48%),
+        conic-gradient(from 0deg, rgba(20,184,166,.62), transparent 26%, transparent 100%);
+      animation: sweep 5s linear infinite;
+    }
+    .radar-card::after { content: ""; position: absolute; inset: 50%; width: 12px; height: 12px; border-radius: 50%; background: #a7f3d0; box-shadow: 52px -48px 0 -2px #fbbf24, -68px 44px 0 -3px #60a5fa, 82px 58px 0 -2px #fb7185; }
+    @keyframes sweep { to { transform: rotate(360deg); } }
+    .radar-text { position: absolute; left: 24px; right: 24px; bottom: 24px; }
+    .radar-text strong { display: block; font-size: 24px; letter-spacing: -.03em; }
+    .radar-text span { display: block; color: rgba(255,255,255,.78); margin-top: 6px; line-height: 1.5; }
+    main { max-width: 1220px; margin: -62px auto 56px; padding: 0 20px; position: relative; z-index: 2; }
+    section, .card, .control-panel, .chart-card, .insight-panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.68);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+    .card {
+      position: relative; overflow: hidden; padding: 20px; min-height: 148px; border-radius: var(--radius-lg);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 28px 70px rgba(2, 8, 23, .15); }
+    .card::before { content: ""; position: absolute; inset: -2px -2px auto -2px; height: 5px; background: linear-gradient(90deg, var(--brand), var(--brand-2), var(--accent)); }
+    .card::after { content: ""; position: absolute; right: -38px; bottom: -42px; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(14,165,233,.12), transparent 68%); }
+    .card .label { color: var(--muted); font-size: 14px; font-weight: 850; display: flex; align-items: center; gap: 8px; }
+    .card .value { font-size: clamp(30px, 4vw, 46px); font-weight: 950; margin: 9px 0 4px; letter-spacing: -.045em; }
+    .card .note { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 850; color: #065f46; background: #d1fae5; }
+    .control-panel { padding: 18px; margin-bottom: 18px; border-radius: var(--radius-xl); }
+    .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 16px; }
+    .section-title h2 { margin: 0; font-size: 22px; letter-spacing: -.03em; }
+    .section-title p { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1fr 1.25fr 1.1fr; gap: 12px; align-items: end; }
+    label { display: block; font-size: 13px; color: var(--muted); font-weight: 850; margin-bottom: 7px; }
+    input, select, button {
+      width: 100%; border: 1px solid rgba(148, 163, 184, .35); border-radius: 14px;
+      padding: 12px 13px; font: inherit; background: rgba(255,255,255,.78); color: var(--ink); outline: none;
+      transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+    }
+    input:focus, select:focus { border-color: rgba(2,132,199,.75); box-shadow: 0 0 0 4px rgba(14,165,233,.12); }
+    button { cursor: pointer; border: none; color: white; font-weight: 900; background: linear-gradient(135deg, #0369a1, #14b8a6); box-shadow: 0 15px 32px rgba(2,132,199,.18); }
+    button:hover { transform: translateY(-2px); }
+    .file-row { margin-top: 12px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .insight-panel { padding: 18px; border-radius: var(--radius-xl); margin-bottom: 18px; }
+    .insight-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; align-items: stretch; }
+    .insight-box {
+      border-radius: 20px; padding: 18px;
+      background: linear-gradient(135deg, rgba(14,165,233,.13), rgba(20,184,166,.12));
+      border: 1px solid rgba(14,165,233,.16);
+    }
+    .insight-box strong { display: block; font-size: 18px; margin-bottom: 8px; }
+    .insight-box p { margin: 0; color: #334155; line-height: 1.65; }
+    .rank-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+    .rank-list li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 10px; border-radius: 15px; background: rgba(255,255,255,.70); border: 1px solid rgba(148,163,184,.18); }
+    .rank-no { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: #e0f2fe; color: #0369a1; font-weight: 950; }
+    .mini-bar { height: 9px; border-radius: 999px; overflow: hidden; background: #e2e8f0; margin-top: 5px; }
+    .mini-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #0284c7, #14b8a6, #f59e0b); transition: width .7s ease; }
+    .charts { display: grid; grid-template-columns: 1.15fr .85fr; gap: 18px; margin-bottom: 18px; }
+    .chart-card { border-radius: var(--radius-xl); padding: 18px; min-height: 392px; position: relative; overflow: hidden; }
+    .chart-card.full { grid-column: 1 / -1; min-height: 340px; }
+    .chart-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 8px; }
+    .chart-title { margin: 0; font-size: 19px; letter-spacing: -.025em; }
+    .chart-tag { flex: 0 0 auto; font-size: 12px; font-weight: 900; color: #075985; background: #e0f2fe; border: 1px solid #bae6fd; padding: 6px 9px; border-radius: 999px; }
+    canvas { width: 100%; height: 292px; display: block; }
+    .full canvas { height: 240px; }
+    .table-section { padding: 18px; border-radius: var(--radius-xl); overflow: hidden; }
+    .table-wrap { overflow: auto; border: 1px solid rgba(148, 163, 184, .22); border-radius: 18px; background: white; }
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    th, td { padding: 13px 14px; border-bottom: 1px solid #edf2f7; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: inherit; }
+    th { background: linear-gradient(180deg, #f8fafc, #eef6fb); color: #334155; font-size: 13px; letter-spacing: -.01em; }
+    tbody tr { transition: background .18s ease, transform .18s ease; }
+    tbody tr:hover { background: #f0fdfa; }
+    tbody td:last-child, tfoot td:last-child { color: #0369a1; font-weight: 950; }
+    tfoot td { background: #082f49; color: white; font-weight: 900; border-bottom: none; }
+    tfoot td:last-child { color: #fde68a; }
+    .footer { color: #64748b; text-align: center; padding: 28px 20px 48px; font-size: 13px; }
+    .tooltip {
+      position: fixed; z-index: 10; display: none; pointer-events: none;
+      background: rgba(15,23,42,.92); color: white; border-radius: 12px; padding: 10px 12px;
+      font-size: 13px; box-shadow: 0 18px 40px rgba(2,8,23,.22); transform: translate(12px, 12px);
+    }
+    .fade-up { animation: fadeUp .55s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 980px) {
+      .hero-grid, .charts, .insight-grid { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .radar-card { min-height: 220px; }
+    }
+    @media (max-width: 620px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .summary-grid, .controls, .file-row { grid-template-columns: 1fr; }
+      .hero { padding-top: 24px; }
+      main { padding: 0 14px; }
+      .chart-card { min-height: 350px; }
+      canvas { height: 250px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="tooltip" id="tooltip"></div>
+  <header class="hero">
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brandmark"><div class="logo">🌊</div><span>해사안전 정책 데이터랩</span></div>
+        <div class="status-chip"><span class="status-dot"></span>정적 웹 대시보드 · 제출용</div>
+      </div>
+      <div class="hero-grid">
+        <div>
+          <div class="kicker">Marine Accident Intelligence Dashboard</div>
+          <h1>유형별 해양사고<br/>현황 대시보드</h1>
+          <p class="subtitle">연도별 해양사고 데이터를 표와 시각화로 빠르게 탐색합니다. CSV 업로드, 연도 범위, 사고 유형, 텍스트 검색 조건을 바꾸면 모든 카드와 그래프가 즉시 갱신됩니다.</p>
+          <div class="header-meta">
+            <span class="pill" id="periodPill">데이터 기간: -</span>
+            <span class="pill">요약 카드 + 데이터 표 + 시각화</span>
+            <span class="pill">반응형 레이아웃</span>
+          </div>
+        </div>
+        <div class="radar-card" aria-hidden="true">
+          <div class="radar-sweep"></div>
+          <div class="radar-text"><strong>사고 흐름 실시간 탐색</strong><span>조건을 변경하면 위험 유형, 최근 추이, 연도별 규모를 한 화면에서 비교합니다.</span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="summary-grid fade-up">
+      <article class="card"><div class="label">📌 총 사고 건수</div><div class="value" id="totalAccidents">0</div><div class="note" id="totalNote">선택 조건 기준</div></article>
+      <article class="card"><div class="label">📈 연평균 사고</div><div class="value" id="avgAccidents">0</div><div class="note">연도별 총계의 평균</div></article>
+      <article class="card"><div class="label">🏆 최다 발생 유형</div><div class="value" id="topType">-</div><div class="note" id="topTypeNote">-</div></article>
+      <article class="card"><div class="label">🕒 최근 연도 총계 <span class="badge">Latest</span></div><div class="value" id="latestTotal">0</div><div class="note" id="latestNote">-</div></article>
+    </div>
+
+    <section class="control-panel fade-up">
+      <div class="section-title">
+        <div><h2>검색·필터</h2><p>연도 범위, 사고 유형, 텍스트 검색을 조합해 필요한 데이터만 확인하세요.</p></div>
+      </div>
+      <div class="controls">
+        <div><label for="startYear">시작 연도</label><select id="startYear"></select></div>
+        <div><label for="endYear">종료 연도</label><select id="endYear"></select></div>
+        <div><label for="typeFilter">사고 유형</label><select id="typeFilter"></select></div>
+        <div><label for="textSearch">텍스트 검색</label><input id="textSearch" type="search" placeholder="예: 충돌, 조난, 2021" /></div>
+        <div><label>&nbsp;</label><button id="resetBtn">데모 데이터 복원</button></div>
+      </div>
+      <div class="file-row">
+        <div class="hint">CSV 첫 행에는 연도와 사고 유형 컬럼이 있어야 합니다. 예: 연도, 충돌, 침몰, 기관손상, 조난</div>
+        <input id="csvFile" type="file" accept=".csv,text/csv" />
+      </div>
+    </section>
+
+    <section class="insight-panel fade-up">
+      <div class="section-title"><div><h2>핵심 인사이트</h2><p>현재 필터 조건에서 자동 계산된 최다 발생 유형과 최근 변화 흐름입니다.</p></div><span class="chart-tag" id="topTypeBox">최다 발생 유형: -</span></div>
+      <div class="insight-grid">
+        <div class="insight-box"><strong id="insightTitle">데이터를 분석 중입니다</strong><p id="insightText">필터를 조정하면 요약 인사이트가 갱신됩니다.</p></div>
+        <ol class="rank-list" id="rankList"></ol>
+      </div>
+    </section>
+
+    <div class="charts fade-up">
+      <section class="chart-card">
+        <div class="chart-head"><div><h2 class="chart-title">연도별 총 사고 건수 추이</h2><p class="hint">선 그래프 위에 마우스를 올리면 값을 확인할 수 있습니다.</p></div><span class="chart-tag">Line</span></div>
+        <canvas id="lineChart"></canvas>
+      </section>
+      <section class="chart-card">
+        <div class="chart-head"><div><h2 class="chart-title">사고 유형별 합계</h2><p class="hint">가장 많이 발생한 유형은 강조 색상으로 표시됩니다.</p></div><span class="chart-tag">Bar</span></div>
+        <canvas id="barChart"></canvas>
+      </section>
+      <section class="chart-card full">
+        <div class="chart-head"><div><h2 class="chart-title">최근 5년 추이</h2><p class="hint">최근 구간의 변화 방향을 빠르게 확인합니다.</p></div><span class="chart-tag">Recent 5Y</span></div>
+        <canvas id="recentChart"></canvas>
+      </section>
+    </div>
+
+    <section class="table-section fade-up">
+      <div class="section-title"><div><h2>연도별 데이터 표</h2><p>CSV 데이터의 연도별 주요 사고 유형과 총계를 표시합니다. 마지막 행에는 합계가 표시됩니다.</p></div></div>
+      <div class="table-wrap"><table id="dataTable"></table></div>
+    </section>
+  </main>
+
+  <div class="footer">본 페이지는 정적 HTML/CSS/JavaScript로 제작되었으며 GitHub Pages, Netlify, Vercel 등에 배포할 수 있습니다.</div>
+
+  <script>
+    const demoRows = [
+      { 연도: 2014, 충돌: 214, 침몰: 47, 기관손상: 622, 조난: 182, 화재폭발: 72, 좌초: 133 },
+      { 연도: 2015, 충돌: 238, 침몰: 52, 기관손상: 691, 조난: 208, 화재폭발: 79, 좌초: 145 },
+      { 연도: 2016, 충돌: 261, 침몰: 49, 기관손상: 734, 조난: 221, 화재폭발: 82, 좌초: 152 },
+      { 연도: 2017, 충돌: 284, 침몰: 56, 기관손상: 788, 조난: 245, 화재폭발: 91, 좌초: 164 },
+      { 연도: 2018, 충돌: 302, 침몰: 61, 기관손상: 842, 조난: 266, 화재폭발: 96, 좌초: 171 },
+      { 연도: 2019, 충돌: 319, 침몰: 58, 기관손상: 889, 조난: 287, 화재폭발: 103, 좌초: 184 },
+      { 연도: 2020, 충돌: 298, 침몰: 63, 기관손상: 916, 조난: 311, 화재폭발: 111, 좌초: 191 },
+      { 연도: 2021, 충돌: 333, 침몰: 67, 기관손상: 972, 조난: 337, 화재폭발: 118, 좌초: 203 },
+      { 연도: 2022, 충돌: 354, 침몰: 64, 기관손상: 1015, 조난: 362, 화재폭발: 121, 좌초: 210 },
+      { 연도: 2023, 충돌: 371, 침몰: 69, 기관손상: 1088, 조난: 389, 화재폭발: 132, 좌초: 224 },
+      { 연도: 2024, 충돌: 365, 침몰: 62, 기관손상: 1127, 조난: 418, 화재폭발: 126, 좌초: 232 }
+    ];
+    let rows = structuredClone(demoRows);
+    let chartHotspots = [];
+    const $ = id => document.getElementById(id);
+    const fmt = n => Number(n || 0).toLocaleString("ko-KR");
+    const typeColors = ["#0284c7", "#14b8a6", "#f59e0b", "#8b5cf6", "#ef4444", "#22c55e", "#06b6d4", "#f97316"];
+    function yearKey(row) { return Object.keys(row).find(k => /연도|년도|year/i.test(k)) || Object.keys(row)[0]; }
+    function getTypes() { if (!rows.length) return []; const yk = yearKey(rows[0]); return Object.keys(rows[0]).filter(k => k !== yk && rows.some(r => !Number.isNaN(Number(String(r[k]).replace(/,/g, ""))))); }
+    function normalizeRows(data) { return data.filter(Boolean).map(row => { const out = {}; Object.entries(row).forEach(([k,v]) => { const key = String(k).trim(); const clean = String(v ?? "").replace(/,/g, "").trim(); out[key] = clean === "" ? 0 : (Number.isNaN(Number(clean)) ? String(v).trim() : Number(clean)); }); return out; }); }
+    function parseCSV(text) {
+      const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(line => line.trim());
+      if (lines.length < 2) throw new Error("데이터 행이 부족합니다.");
+      const split = line => { const result = []; let cur = "", inQuotes = false; for (let i=0;i<line.length;i++) { const ch = line[i]; if (ch === '"') inQuotes = !inQuotes; else if (ch === ',' && !inQuotes) { result.push(cur); cur = ""; } else cur += ch; } result.push(cur); return result.map(v => v.trim()); };
+      const headers = split(lines[0]);
+      return normalizeRows(lines.slice(1).map(line => { const values = split(line); return Object.fromEntries(headers.map((h,i) => [h, values[i] ?? ""])); }));
+    }
+    function initFilters() {
+      if (!rows.length) return;
+      const years = [...new Set(rows.map(r => Number(r[yearKey(r)])))].filter(Boolean).sort((a,b) => a-b);
+      const types = getTypes();
+      $("startYear").innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+      $("endYear").innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+      $("startYear").value = years[0]; $("endYear").value = years[years.length - 1];
+      $("typeFilter").innerHTML = `<option value="전체">전체 유형</option>` + types.map(t => `<option value="${t}">${t}</option>`).join("");
+      $("typeFilter").value = "전체"; $("textSearch").value = "";
+    }
+    function filteredRows() {
+      const start = Number($("startYear").value), end = Number($("endYear").value), q = $("textSearch").value.trim().toLowerCase();
+      return rows.filter(r => Number(r[yearKey(r)]) >= Math.min(start,end) && Number(r[yearKey(r)]) <= Math.max(start,end)).filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+    }
+    function selectedTypes() { const selected = $("typeFilter").value; const types = getTypes(); return selected === "전체" ? types : types.filter(t => t === selected); }
+    function aggregateByType(data, types) { return Object.fromEntries(types.map(type => [type, data.reduce((sum,row) => sum + Number(row[type] || 0), 0)])); }
+    function fitCanvas(canvas) { const ratio = window.devicePixelRatio || 1; const rect = canvas.getBoundingClientRect(); canvas.width = Math.max(320, Math.floor(rect.width * ratio)); canvas.height = Math.max(220, Math.floor(rect.height * ratio)); const ctx = canvas.getContext("2d"); ctx.setTransform(ratio, 0, 0, ratio, 0, 0); return { width: rect.width, height: rect.height, ctx }; }
+    function clear(canvas) { const ctx = canvas.getContext("2d"); ctx.clearRect(0,0,canvas.width,canvas.height); return ctx; }
+    function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+    function grid(ctx, w, h, pad, max, min=0) { const plotH = h - pad.top - pad.bottom; ctx.font = "12px system-ui"; ctx.lineWidth = 1; for (let i=0;i<=4;i++) { const y = pad.top + (plotH/4)*i; const val = Math.round(max - ((max-min)/4)*i); ctx.strokeStyle = "rgba(148,163,184,.22)"; ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke(); ctx.fillStyle = "#64748b"; ctx.fillText(fmt(val), 8, y + 4); } ctx.strokeStyle = "rgba(51,65,85,.34)"; ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, h - pad.bottom); ctx.lineTo(w - pad.right, h - pad.bottom); ctx.stroke(); }
+    function drawLineChart(canvas, data, label, mode="line") {
+      const {width:w, height:h} = fitCanvas(canvas); const ctx = clear(canvas); const pad = {left:56,right:28,top:28,bottom:48}; const values = data.map(d => d.value); const max = Math.max(...values,1)*1.14; const min = Math.min(0, Math.min(...values,0)); const plotW = w-pad.left-pad.right, plotH = h-pad.top-pad.bottom; grid(ctx,w,h,pad,max,min);
+      const pts = data.map((d,i) => ({...d, x: pad.left + (data.length === 1 ? plotW/2 : (plotW/(data.length-1))*i), y: pad.top + plotH - ((d.value-min)/(max-min||1))*plotH}));
+      if (pts.length) { ctx.beginPath(); pts.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.lineTo(pts[pts.length-1].x, h-pad.bottom); ctx.lineTo(pts[0].x, h-pad.bottom); ctx.closePath(); const fill = ctx.createLinearGradient(0,pad.top,0,h-pad.bottom); fill.addColorStop(0,"rgba(14,165,233,.25)"); fill.addColorStop(1,"rgba(20,184,166,0)"); ctx.fillStyle = fill; ctx.fill(); }
+      const grad = ctx.createLinearGradient(pad.left,0,w-pad.right,0); grad.addColorStop(0,"#0284c7"); grad.addColorStop(.58,"#14b8a6"); grad.addColorStop(1,"#f59e0b");
+      ctx.strokeStyle = grad; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath(); pts.forEach((p,i)=> i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.stroke();
+      chartHotspots = chartHotspots.filter(hs => hs.canvas !== canvas);
+      pts.forEach((p,i) => { ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(p.x,p.y,7,0,Math.PI*2); ctx.fill(); ctx.strokeStyle = typeColors[i % typeColors.length]; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = "#0f172a"; ctx.font = "700 12px system-ui"; ctx.fillText(fmt(p.value), p.x - 16, p.y - 14); ctx.fillStyle = "#64748b"; ctx.font = "12px system-ui"; ctx.fillText(p.year, p.x - 14, h - 18); chartHotspots.push({canvas, x:p.x, y:p.y, r:12, text:`${p.year}년 · ${fmt(p.value)}건`}); });
+      ctx.fillStyle = "#0f172a"; ctx.font = "800 13px system-ui"; ctx.fillText(label, pad.left, 18);
+    }
+    function drawBarChart(canvas, dataObj) {
+      const {width:w, height:h} = fitCanvas(canvas); const ctx = clear(canvas); const entries = Object.entries(dataObj).sort((a,b)=>b[1]-a[1]); const pad = {left:58,right:22,top:28,bottom:78}; const max = Math.max(...entries.map(e=>e[1]),1)*1.16; const plotW=w-pad.left-pad.right, plotH=h-pad.top-pad.bottom; grid(ctx,w,h,pad,max,0); chartHotspots = chartHotspots.filter(hs => hs.canvas !== canvas);
+      const gap = Math.max(8, Math.min(16, plotW/(entries.length*6))); const barW = Math.max(22, (plotW - gap*(entries.length-1))/entries.length);
+      entries.forEach(([type,value],i)=> { const x=pad.left+i*(barW+gap); const bh=(value/max)*plotH; const y=pad.top+plotH-bh; const grad=ctx.createLinearGradient(0,y,0,h-pad.bottom); grad.addColorStop(0, i===0 ? "#f59e0b" : typeColors[i%typeColors.length]); grad.addColorStop(1, "rgba(14,165,233,.50)"); ctx.fillStyle=grad; roundRect(ctx,x,y,barW,bh,10); ctx.fill(); ctx.fillStyle="#0f172a"; ctx.font="800 12px system-ui"; ctx.fillText(fmt(value), x, y-8); ctx.save(); ctx.translate(x+barW/2,h-20); ctx.rotate(-Math.PI/5); ctx.textAlign="right"; ctx.fillStyle="#64748b"; ctx.font="12px system-ui"; ctx.fillText(type,0,0); ctx.restore(); chartHotspots.push({canvas, x:x+barW/2, y:y+bh/2, r:Math.max(16,barW/2), text:`${type} · ${fmt(value)}건`}); });
+    }
+    function animateNumber(el, value) { const end = Number(value || 0), start = Number(String(el.dataset.value || "0").replace(/,/g,"")) || 0; el.dataset.value = end; const t0 = performance.now(); const dur = 650; function step(t) { const p = Math.min(1, (t-t0)/dur); const eased = 1 - Math.pow(1-p,3); el.textContent = fmt(Math.round(start + (end-start)*eased)); if (p < 1) requestAnimationFrame(step); } requestAnimationFrame(step); }
+    function renderTable(data, types) { const table = $("dataTable"); const headers=["연도",...types,"총계"]; const body=data.map(row=>{ const year=row[yearKey(row)]; const total=types.reduce((s,t)=>s+Number(row[t]||0),0); return `<tr><td>${year}</td>${types.map(t=>`<td>${fmt(row[t]||0)}</td>`).join("")}<td>${fmt(total)}</td></tr>`; }).join(""); const totals=types.map(t=>data.reduce((s,row)=>s+Number(row[t]||0),0)); const grand=totals.reduce((a,b)=>a+b,0); table.innerHTML=`<thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${body || `<tr><td colspan="${headers.length}">조건에 맞는 데이터가 없습니다.</td></tr>`}</tbody><tfoot><tr><td>합계</td>${totals.map(v=>`<td>${fmt(v)}</td>`).join("")}<td>${fmt(grand)}</td></tr></tfoot>`; }
+    function renderRanks(byType) { const entries = Object.entries(byType).sort((a,b)=>b[1]-a[1]).slice(0,4); const max = Math.max(...entries.map(e=>e[1]),1); $("rankList").innerHTML = entries.map(([type,value],i)=>`<li><span class="rank-no">${i+1}</span><span><strong>${type}</strong><div class="mini-bar"><span class="mini-fill" style="width:${Math.round(value/max*100)}%"></span></div></span><strong>${fmt(value)}</strong></li>`).join(""); }
+    function renderInsights(yearly, byType, data) { const entries=Object.entries(byType).sort((a,b)=>b[1]-a[1]); const top=entries[0] || ["-",0]; const first=yearly[0]?.value || 0, last=yearly[yearly.length-1]?.value || 0; const delta=last-first; const rate=first ? Math.round(delta/first*100) : 0; const trend = delta > 0 ? "증가" : delta < 0 ? "감소" : "유지"; $("insightTitle").textContent = `${top[0]}이(가) 가장 많이 발생했습니다`; $("insightText").textContent = `선택된 ${data.length}개 연도에서 ${top[0]}은(는) 총 ${fmt(top[1])}건입니다. 기간 첫해 대비 마지막 해 총 사고 건수는 ${Math.abs(rate)}% ${trend}했으며, 최근 변화 흐름은 정책 우선순위 검토에 활용할 수 있습니다.`; renderRanks(byType); }
+    function render() { const data=filteredRows().sort((a,b)=>Number(a[yearKey(a)])-Number(b[yearKey(b)])); const types=selectedTypes(); const yearly=data.map(row=>({year:row[yearKey(row)], value:types.reduce((sum,type)=>sum+Number(row[type]||0),0)})); const byType=aggregateByType(data,types); const total=yearly.reduce((sum,d)=>sum+d.value,0); const avg=data.length?Math.round(total/data.length):0; const topEntry=Object.entries(byType).sort((a,b)=>b[1]-a[1])[0] || ["-",0]; const latest=yearly[yearly.length-1] || {year:"-", value:0}; const firstYear=data[0]?.[yearKey(data[0])] ?? "-"; const lastYear=data[data.length-1]?.[yearKey(data[data.length-1])] ?? "-"; $("periodPill").textContent=`데이터 기간: ${firstYear}~${lastYear}`; animateNumber($("totalAccidents"), total); animateNumber($("avgAccidents"), avg); $("topType").textContent=topEntry[0]; $("topTypeNote").textContent=`${fmt(topEntry[1])}건, 선택 조건 기준`; animateNumber($("latestTotal"), latest.value); $("latestNote").textContent=`${latest.year}년 기준`; $("totalNote").textContent=`${data.length}개 연도 표시`; $("topTypeBox").textContent=`최다 발생 유형: ${topEntry[0]} (${fmt(topEntry[1])}건)`; renderInsights(yearly,byType,data); drawLineChart($("lineChart"),yearly,"연도별 총 사고 건수"); drawBarChart($("barChart"),byType); drawLineChart($("recentChart"),yearly.slice(-5),"최근 5년 총 사고 건수","recent"); renderTable(data,types); }
+    ["startYear","endYear","typeFilter","textSearch"].forEach(id => $(id).addEventListener("input", render));
+    $("resetBtn").addEventListener("click", () => { rows=structuredClone(demoRows); initFilters(); render(); });
+    $("csvFile").addEventListener("change", async event => { const file=event.target.files[0]; if (!file) return; try { rows=parseCSV(await file.text()); initFilters(); render(); } catch(err) { alert("CSV를 읽을 수 없습니다: " + err.message); } });
+    const tooltip = $("tooltip");
+    document.addEventListener("mousemove", e => { const target = chartHotspots.find(hs => hs.canvas === e.target && Math.hypot(e.offsetX - hs.x, e.offsetY - hs.y) <= hs.r); if (target) { tooltip.style.display="block"; tooltip.style.left=e.clientX+"px"; tooltip.style.top=e.clientY+"px"; tooltip.textContent=target.text; } else { tooltip.style.display="none"; } });
+    window.addEventListener("resize", render); initFilters(); render();
+  </script>
+</body>
+</html>
