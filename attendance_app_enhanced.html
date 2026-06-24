@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>스마트 출석 체크 애플리케이션</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      -- green: #16a34a;
+      --red: #dc2626;
+      --yellow: #d97706;
+      --bg: #eef2ff;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, #c7d2fe 0, transparent 35%),
+        linear-gradient(135deg, #eef2ff, #f8fafc);
+      color: var(--text);
+    }
+
+    .app {
+      width: min(1100px, 92%);
+      margin: 40px auto;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 24px;
+    }
+
+    .title-card,
+    .clock-card,
+    .panel {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 24px;
+      box-shadow: 0 20px 45px rgba(79, 70, 229, 0.12);
+      backdrop-filter: blur(12px);
+    }
+
+    .title-card {
+      padding: 30px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: var(--primary-dark);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 18px 0 10px;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+    }
+
+    .description {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .clock-card {
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: right;
+    }
+
+    .today {
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .clock {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .panel {
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr auto;
+      gap: 12px;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+    }
+
+    button {
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+      box-shadow: 0 10px 20px rgba(79, 70, 229, 0.25);
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background: #111827;
+      box-shadow: 0 10px 20px rgba(17, 24, 39, 0.18);
+    }
+
+    button.danger {
+      background: #ef4444;
+      box-shadow: 0 10px 20px rgba(239, 68, 68, 0.18);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat {
+      padding: 22px;
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+      border: 1px solid #eef2ff;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .stat strong {
+      font-size: 32px;
+    }
+
+    .table-wrap {
+      overflow: hidden;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: #111827;
+      color: white;
+      padding: 16px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    td {
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .number {
+      width: 56px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .student {
+      font-weight: 800;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 70px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .present {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .absent {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .late {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .small-btn {
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      box-shadow: none;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .footer-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: right;
+    }
+
+    @media (max-width: 800px) {
+      .hero,
+      .form-grid,
+      .toolbar,
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .clock-card {
+        text-align: left;
+      }
+
+      th:nth-child(4),
+      td:nth-child(4) {
+        display: none;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="title-card">
+        <div class="badge">📋 스마트 출석 관리</div>
+        <h1>출석 체크 애플리케이션</h1>
+        <p class="description">
+          학생 이름을 입력하고 출석 상태를 기록하세요.
+          검색, 상태 변경, 통계 확인, 브라우저 저장 기능을 제공합니다.
+        </p>
+      </div>
+
+      <div class="clock-card">
+        <div class="today" id="todayText">오늘 날짜</div>
+        <div class="clock" id="clockText">00:00:00</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="form-grid">
+        <input type="text" id="studentName" placeholder="학생 이름을 입력하세요" />
+        <select id="attendanceStatus">
+          <option value="출석">출석</option>
+          <option value="결석">결석</option>
+          <option value="지각">지각</option>
+        </select>
+        <button type="button" onclick="addAttendance()">출석 추가</button>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="이름으로 검색하기" oninput="renderTable()" />
+        <button type="button" class="secondary" onclick="exportText()">텍스트 복사</button>
+        <button type="button" class="danger" onclick="clearAll()">전체 초기화</button>
+      </div>
+    </section>
+
+    <section class="summary">
+      <div class="stat">
+        <span>전체 인원</span>
+        <strong id="totalCount">0</strong>
+      </div>
+      <div class="stat">
+        <span>출석</span>
+        <strong id="presentCount">0</strong>
+      </div>
+      <div class="stat">
+        <span>결석</span>
+        <strong id="absentCount">0</strong>
+      </div>
+      <div class="stat">
+        <span>지각</span>
+        <strong id="lateCount">0</strong>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="number">번호</th>
+              <th>학생 이름</th>
+              <th>상태</th>
+              <th>기록 시간</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTable">
+            <tr>
+              <td colspan="5" class="empty">아직 출석 기록이 없습니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="footer-note">기록은 현재 브라우저에 자동 저장됩니다.</p>
+    </section>
+  </main>
+
+  <script>
+    let attendanceList = JSON.parse(localStorage.getItem("attendanceList")) || [];
+
+    const studentNameInput = document.getElementById("studentName");
+    const statusSelect = document.getElementById("attendanceStatus");
+    const searchInput = document.getElementById("searchInput");
+    const tableBody = document.getElementById("attendanceTable");
+
+    function saveData() {
+      localStorage.setItem("attendanceList", JSON.stringify(attendanceList));
+    }
+
+    function addAttendance() {
+      const name = studentNameInput.value.trim();
+      const status = statusSelect.value;
+
+      if (!name) {
+        alert("학생 이름을 입력해주세요.");
+        studentNameInput.focus();
+        return;
+      }
+
+      const duplicated = attendanceList.some(student => student.name === name);
+
+      if (duplicated && !confirm("이미 등록된 이름입니다. 그래도 추가할까요?")) {
+        return;
+      }
+
+      const now = new Date();
+
+      attendanceList.push({
+        id: Date.now(),
+        name,
+        status,
+        time: now.toLocaleString("ko-KR")
+      });
+
+      studentNameInput.value = "";
+      statusSelect.value = "출석";
+      studentNameInput.focus();
+
+      saveData();
+      renderTable();
+      updateSummary();
+    }
+
+    function getStatusClass(status) {
+      if (status === "출석") return "present";
+      if (status === "결석") return "absent";
+      return "late";
+    }
+
+    function renderTable() {
+      const keyword = searchInput.value.trim().toLowerCase();
+
+      const filteredList = attendanceList.filter(student =>
+        student.name.toLowerCase().includes(keyword)
+      );
+
+      if (filteredList.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty">표시할 출석 기록이 없습니다.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableBody.innerHTML = filteredList.map((student, index) => `
+        <tr>
+          <td class="number">${index + 1}</td>
+          <td class="student">${escapeHTML(student.name)}</td>
+          <td>
+            <span class="status-pill ${getStatusClass(student.status)}">
+              ${student.status}
+            </span>
+          </td>
+          <td>${student.time}</td>
+          <td>
+            <div class="actions">
+              <button class="small-btn secondary" onclick="changeStatus(${student.id})">상태 변경</button>
+              <button class="small-btn danger" onclick="deleteAttendance(${student.id})">삭제</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function changeStatus(id) {
+      const student = attendanceList.find(item => item.id === id);
+      const order = ["출석", "지각", "결석"];
+      const currentIndex = order.indexOf(student.status);
+      student.status = order[(currentIndex + 1) % order.length];
+
+      saveData();
+      renderTable();
+      updateSummary();
+    }
+
+    function deleteAttendance(id) {
+      attendanceList = attendanceList.filter(student => student.id !== id);
+      saveData();
+      renderTable();
+      updateSummary();
+    }
+
+    function clearAll() {
+      if (attendanceList.length === 0) {
+        alert("삭제할 기록이 없습니다.");
+        return;
+      }
+
+      if (!confirm("모든 출석 기록을 삭제할까요?")) {
+        return;
+      }
+
+      attendanceList = [];
+      saveData();
+      renderTable();
+      updateSummary();
+    }
+
+    function updateSummary() {
+      document.getElementById("totalCount").textContent = attendanceList.length;
+      document.getElementById("presentCount").textContent =
+        attendanceList.filter(student => student.status === "출석").length;
+      document.getElementById("absentCount").textContent =
+        attendanceList.filter(student => student.status === "결석").length;
+      document.getElementById("lateCount").textContent =
+        attendanceList.filter(student => student.status === "지각").length;
+    }
+
+    function exportText() {
+      if (attendanceList.length === 0) {
+        alert("복사할 출석 기록이 없습니다.");
+        return;
+      }
+
+      const text = attendanceList
+        .map((student, index) => `${index + 1}. ${student.name} - ${student.status} (${student.time})`)
+        .join("\n");
+
+      navigator.clipboard.writeText(text)
+        .then(() => alert("출석 기록이 클립보드에 복사되었습니다."))
+        .catch(() => alert("복사에 실패했습니다."));
+    }
+
+    function escapeHTML(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function updateClock() {
+      const now = new Date();
+
+      document.getElementById("todayText").textContent =
+        now.toLocaleDateString("ko-KR", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          weekday: "long"
+        });
+
+      document.getElementById("clockText").textContent =
+        now.toLocaleTimeString("ko-KR");
+    }
+
+    studentNameInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        addAttendance();
+      }
+    });
+
+    updateClock();
+    setInterval(updateClock, 1000);
+    renderTable();
+    updateSummary();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오프라인 업무용 QR 코드 생성기</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #2563eb;
+      --secondary: #7c3aed;
+      --accent: #06b6d4;
+      --pink: #ec4899;
+      --dark: #0f172a;
+      --card: rgba(255, 255, 255, 0.9);
+      --line: rgba(255, 255, 255, 0.48);
+      --text: #1e293b;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --success: #16a34a;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.38), transparent 30%),
+        radial-gradient(circle at 90% 15%, rgba(236, 72, 153, 0.34), transparent 30%),
+        radial-gradient(circle at 50% 95%, rgba(6, 182, 212, 0.36), transparent 35%),
+        linear-gradient(135deg, #0f172a, #1e1b4b 45%, #312e81);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 42px 42px;
+      pointer-events: none;
+    }
+
+    .app {
+      position: relative;
+      width: min(1180px, 92%);
+      margin: 42px auto;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      margin-bottom: 24px;
+      align-items: stretch;
+    }
+
+    .glass {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(18px);
+    }
+
+    .title-card {
+      padding: 34px;
+      color: white;
+      background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.84), rgba(124, 58, 237, 0.78)),
+        rgba(255, 255, 255, 0.08);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 20px 0 12px;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.05;
+      letter-spacing: -2px;
+    }
+
+    .description {
+      margin: 0;
+      max-width: 700px;
+      font-size: 17px;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    .info-card {
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.94), rgba(255,255,255,0.74));
+    }
+
+    .info-label {
+      color: var(--muted);
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .today {
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--dark);
+    }
+
+    .offline-mark {
+      display: inline-flex;
+      width: fit-content;
+      margin-top: 14px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      padding: 26px;
+    }
+
+    .panel h2 {
+      margin: 0 0 18px;
+      font-size: 22px;
+      color: var(--dark);
+    }
+
+    label {
+      display: block;
+      margin: 16px 0 8px;
+      color: #334155;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 15px 16px;
+      border: 1px solid #dbe3ef;
+      border-radius: 16px;
+      background: white;
+      font-size: 16px;
+      outline: none;
+      transition: 0.18s;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-size: 15px;
+      font-weight: 900;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+      box-shadow: 0 14px 24px rgba(37, 99, 235, 0.23);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.04);
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+    }
+
+    .copy-btn {
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+    }
+
+    .download-btn {
+      background: linear-gradient(135deg, var(--pink), var(--secondary));
+    }
+
+    .reset-btn {
+      background: linear-gradient(135deg, #111827, #475569);
+    }
+
+    .result-card {
+      min-height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto auto;
+      gap: 18px;
+    }
+
+    .qr-stage {
+      display: grid;
+      place-items: center;
+      min-height: 390px;
+      padding: 26px;
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(37,99,235,0.08), rgba(236,72,153,0.08)),
+        white;
+      border: 1px dashed #cbd5e1;
+    }
+
+    #qrBox {
+      display: grid;
+      place-items: center;
+      width: 310px;
+      min-height: 310px;
+      padding: 18px;
+      border-radius: 28px;
+      background: white;
+      box-shadow: 0 22px 45px rgba(15, 23, 42, 0.18);
+    }
+
+    #qrCanvas {
+      width: 260px;
+      height: 260px;
+      display: none;
+      image-rendering: pixelated;
+    }
+
+    .placeholder,
+    .error-box {
+      text-align: center;
+      color: var(--muted);
+      font-weight: 800;
+      line-height: 1.7;
+    }
+
+    .error-box {
+      color: var(--danger);
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .success-box {
+      color: var(--success);
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 800;
+      display: none;
+    }
+
+    .payload {
+      padding: 18px;
+      border-radius: 20px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+      color: #334155;
+      line-height: 1.6;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+
+    .history {
+      margin-top: 24px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+      max-height: 260px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .history-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .history-item strong {
+      display: block;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .history-item span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .mini-btn {
+      padding: 9px 12px;
+      border-radius: 12px;
+      box-shadow: none;
+      background: #334155;
+      font-size: 13px;
+    }
+
+    .notice {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .layout,
+      .row,
+      .button-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .today {
+        font-size: 24px;
+      }
+
+      #qrBox {
+        width: 260px;
+        min-height: 260px;
+      }
+
+      #qrCanvas {
+        width: 220px;
+        height: 220px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="title-card glass">
+        <div class="badge">💼 Offline Business QR Generator</div>
+        <h1>업무용 QR 코드 생성기</h1>
+        <p class="description">
+          업무명과 날짜를 입력하면 인터넷 연결 없이도 QR 코드가 생성됩니다.
+          부서, 담당자, 메모까지 함께 담아 업무 기록용으로 활용할 수 있습니다.
+        </p>
+      </div>
+
+      <div class="info-card glass">
+        <div class="info-label">오늘 날짜</div>
+        <div class="today" id="todayText">0000년 00월 00일</div>
+        <div class="offline-mark">✅ 완전 오프라인 지원</div>
+        <p class="notice">외부 CDN, 외부 API, 인터넷 연결 없이 브라우저 안에서 QR을 직접 생성합니다.</p>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="panel glass">
+        <h2>QR 정보 입력</h2>
+
+        <label for="workName">업무명</label>
+        <input type="text" id="workName" placeholder="예: 월간 보고서 검토" />
+
+        <div class="row">
+          <div>
+            <label for="workDate">날짜</label>
+            <input type="date" id="workDate" />
+          </div>
+
+          <div>
+            <label for="department">부서</label>
+            <input type="text" id="department" placeholder="예: 기획팀" />
+          </div>
+        </div>
+
+        <label for="manager">담당자</label>
+        <input type="text" id="manager" placeholder="예: 홍길동" />
+
+        <label for="memo">업무 메모</label>
+        <textarea id="memo" maxlength="80" placeholder="QR 용량을 고려해 80자 이내로 입력하세요."></textarea>
+
+        <label for="qrMode">QR 데이터 형식</label>
+        <select id="qrMode">
+          <option value="compact">간단 형식 권장</option>
+          <option value="text">일반 텍스트</option>
+          <option value="json">JSON 데이터</option>
+        </select>
+
+        <div class="button-grid">
+          <button class="primary-btn" onclick="generateQR()">QR 생성</button>
+          <button class="copy-btn" onclick="copyPayload()">내용 복사</button>
+          <button class="download-btn" onclick="downloadQR()">QR 다운로드</button>
+          <button class="reset-btn" onclick="resetForm()">초기화</button>
+        </div>
+
+        <p class="notice">
+          이 오프라인 버전은 QR 버전 1~9, 오류정정 L을 지원합니다. 긴 메모는 QR 용량을 초과할 수 있습니다.
+        </p>
+      </div>
+
+      <div class="panel glass result-card">
+        <h2>생성 결과</h2>
+
+        <div class="qr-stage">
+          <div id="qrBox">
+            <div id="placeholder" class="placeholder">
+              업무 정보를 입력한 뒤<br />
+              QR 생성 버튼을 눌러주세요.
+            </div>
+            <canvas id="qrCanvas"></canvas>
+          </div>
+        </div>
+
+        <div id="successBox" class="success-box">QR 코드가 오프라인으로 생성되었습니다.</div>
+
+        <div class="payload" id="payloadPreview">
+          아직 생성된 QR 데이터가 없습니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="panel glass history">
+      <h2>최근 생성 이력</h2>
+      <div class="history-list" id="historyList"></div>
+    </section>
+  </main>
+
+  <script>
+    /*
+      Small offline QR encoder
+      Supports: Byte mode, Error correction L, QR versions 1~9.
+      Good for compact business text generated by this page.
+    */
+
+    const QR_DATA_CODEWORDS_L = [0, 19, 34, 55, 80, 108, 136, 156, 194, 232];
+    const QR_TOTAL_CODEWORDS = [0, 26, 44, 70, 100, 134, 172, 196, 242, 292];
+    const QR_REMAINDER_BITS = [0, 0, 7, 7, 7, 7, 7, 0, 0, 0];
+    const QR_ALIGN_POS = {
+      1: [],
+      2: [6, 18],
+      3: [6, 22],
+      4: [6, 26],
+      5: [6, 30],
+      6: [6, 34],
+      7: [6, 22, 38],
+      8: [6, 24, 42],
+      9: [6, 26, 46]
+    };
+
+    const workNameInput = document.getElementById("workName");
+    const workDateInput = document.getElementById("workDate");
+    const departmentInput = document.getElementById("department");
+    const managerInput = document.getElementById("manager");
+    const memoInput = document.getElementById("memo");
+    const qrModeSelect = document.getElementById("qrMode");
+
+    const qrCanvas = document.getElementById("qrCanvas");
+    const placeholder = document.getElementById("placeholder");
+    const payloadPreview = document.getElementById("payloadPreview");
+    const successBox = document.getElementById("successBox");
+    const historyList = document.getElementById("historyList");
+
+    let currentPayload = "";
+    let history = JSON.parse(localStorage.getItem("qrWorkHistoryOffline")) || [];
+
+    function setToday() {
+      const today = new Date();
+
+      document.getElementById("todayText").textContent =
+        today.toLocaleDateString("ko-KR", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          weekday: "long"
+        });
+
+      workDateInput.value = today.toISOString().slice(0, 10);
+    }
+
+    function buildPayload() {
+      const workName = workNameInput.value.trim();
+      const workDate = workDateInput.value;
+      const department = departmentInput.value.trim();
+      const manager = managerInput.value.trim();
+      const memo = memoInput.value.trim();
+      const createdAt = new Date().toLocaleString("ko-KR");
+
+      if (!workName) {
+        alert("업무명을 입력해주세요.");
+        workNameInput.focus();
+        return null;
+      }
+
+      if (!workDate) {
+        alert("날짜를 선택해주세요.");
+        workDateInput.focus();
+        return null;
+      }
+
+      if (qrModeSelect.value === "json") {
+        return JSON.stringify({
+          work: workName,
+          date: workDate,
+          dept: department || "",
+          manager: manager || "",
+          memo: memo || "",
+          created: createdAt
+        });
+      }
+
+      if (qrModeSelect.value === "text") {
+        return [
+          "[업무 QR]",
+          `업무명: ${workName}`,
+          `날짜: ${workDate}`,
+          `부서: ${department || "미입력"}`,
+          `담당자: ${manager || "미입력"}`,
+          `메모: ${memo || "없음"}`,
+          `생성: ${createdAt}`
+        ].join("\\n");
+      }
+
+      return `WORK=${workName};DATE=${workDate};DEPT=${department || ""};MANAGER=${manager || ""};MEMO=${memo || ""}`;
+    }
+
+    function generateQR() {
+      const payload = buildPayload();
+
+      if (!payload) {
+        return;
+      }
+
+      try {
+        const qr = createQrMatrix(payload);
+        drawQrToCanvas(qrCanvas, qr.modules, 10);
+
+        currentPayload = payload;
+        placeholder.style.display = "none";
+        qrCanvas.style.display = "block";
+        successBox.style.display = "block";
+        payloadPreview.textContent = payload;
+
+        addHistory();
+      } catch (error) {
+        qrCanvas.style.display = "none";
+        successBox.style.display = "none";
+        placeholder.style.display = "block";
+        placeholder.className = "error-box";
+        placeholder.innerHTML = escapeHTML(error.message).replaceAll("\\n", "<br>");
+      }
+    }
+
+    function createQrMatrix(text) {
+      const bytes = Array.from(new TextEncoder().encode(text));
+      const version = chooseVersion(bytes.length);
+      const size = version * 4 + 17;
+      const dataCodewords = QR_DATA_CODEWORDS_L[version];
+      const totalCodewords = QR_TOTAL_CODEWORDS[version];
+      const eccCodewords = totalCodewords - dataCodewords;
+
+      const data = encodeData(bytes, version, dataCodewords);
+      const codewords = addErrorCorrectionAndInterleave(version, data, eccCodewords);
+
+      const modules = create2D(size, false);
+      const isFunction = create2D(size, false);
+
+      drawFunctionPatterns(version, modules, isFunction);
+      drawCodewords(modules, isFunction, codewords, QR_REMAINDER_BITS[version]);
+      applyMask(modules, isFunction, 0);
+      drawFormatBits(modules, isFunction, 0);
+
+      if (version >= 7) {
+        drawVersion(modules, isFunction, version);
+      }
+
+      return { version, size, modules };
+    }
+
+    function chooseVersion(byteLength) {
+      for (let version = 1; version <= 9; version++) {
+        const capacityBits = QR_DATA_CODEWORDS_L[version] * 8;
+        const neededBits = 4 + 8 + byteLength * 8;
+        if (neededBits <= capacityBits) {
+          return version;
+        }
+      }
+
+      throw new Error(
+        "입력 내용이 너무 길어 QR 코드에 담을 수 없습니다.\\n" +
+        "메모를 줄이거나 QR 데이터 형식을 '간단 형식'으로 선택해주세요."
+      );
+    }
+
+    function encodeData(bytes, version, dataCodewords) {
+      const bits = [];
+
+      appendBits(bits, 0x4, 4);
+      appendBits(bits, bytes.length, 8);
+
+      for (const b of bytes) {
+        appendBits(bits, b, 8);
+      }
+
+      const capacityBits = dataCodewords * 8;
+      const terminator = Math.min(4, capacityBits - bits.length);
+      appendBits(bits, 0, terminator);
+
+      while (bits.length % 8 !== 0) {
+        bits.push(0);
+      }
+
+      const codewords = [];
+
+      for (let i = 0; i < bits.length; i += 8) {
+        let value = 0;
+
+        for (let j = 0; j < 8; j++) {
+          value = (value << 1) | bits[i + j];
+        }
+
+        codewords.push(value);
+      }
+
+      for (let pad = 0xec; codewords.length < dataCodewords; pad ^= 0xfd) {
+        codewords.push(pad);
+      }
+
+      return codewords;
+    }
+
+    function addErrorCorrectionAndInterleave(version, data, eccCodewordsTotal) {
+      let blocks;
+
+      if (version <= 5) {
+        blocks = [data];
+      } else if (version >= 6 && version <= 9) {
+        const half = data.length / 2;
+        blocks = [data.slice(0, half), data.slice(half)];
+      } else {
+        throw new Error("지원하지 않는 QR 버전입니다.");
+      }
+
+      const eccPerBlock = eccCodewordsTotal / blocks.length;
+      const eccBlocks = blocks.map(block => reedSolomonRemainder(block, eccPerBlock));
+      const result = [];
+      const maxDataLen = Math.max(...blocks.map(block => block.length));
+
+      for (let i = 0; i < maxDataLen; i++) {
+        for (const block of blocks) {
+          if (i < block.length) {
+            result.push(block[i]);
+          }
+        }
+      }
+
+      for (let i = 0; i < eccPerBlock; i++) {
+        for (const ecc of eccBlocks) {
+          result.push(ecc[i]);
+        }
+      }
+
+      return result;
+    }
+
+    function drawFunctionPatterns(version, modules, isFunction) {
+      const size = modules.length;
+
+      drawFinder(modules, isFunction, 3, 3);
+      drawFinder(modules, isFunction, size - 4, 3);
+      drawFinder(modules, isFunction, 3, size - 4);
+
+      for (let i = 0; i < size; i++) {
+        setFunctionModule(modules, isFunction, 6, i, i % 2 === 0);
+        setFunctionModule(modules, isFunction, i, 6, i % 2 === 0);
+      }
+
+      for (const row of QR_ALIGN_POS[version]) {
+        for (const col of QR_ALIGN_POS[version]) {
+          if (isFunction[row][col]) {
+            continue;
+          }
+
+          drawAlignment(modules, isFunction, col, row);
+        }
+      }
+
+      setFunctionModule(modules, isFunction, 8, size - 8, true);
+
+      for (let i = 0; i < 8; i++) {
+        setFunctionModule(modules, isFunction, 8, i, false);
+        setFunctionModule(modules, isFunction, i, 8, false);
+        setFunctionModule(modules, isFunction, size - 1 - i, 8, false);
+        setFunctionModule(modules, isFunction, 8, size - 1 - i, false);
+      }
+    }
+
+    function drawFinder(modules, isFunction, centerX, centerY) {
+      for (let dy = -4; dy <= 4; dy++) {
+        for (let dx = -4; dx <= 4; dx++) {
+          const x = centerX + dx;
+          const y = centerY + dy;
+
+          if (0 <= x && x < modules.length && 0 <= y && y < modules.length) {
+            const dist = Math.max(Math.abs(dx), Math.abs(dy));
+            setFunctionModule(modules, isFunction, x, y, dist !== 2 && dist !== 4);
+          }
+        }
+      }
+    }
+
+    function drawAlignment(modules, isFunction, centerX, centerY) {
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const dist = Math.max(Math.abs(dx), Math.abs(dy));
+          setFunctionModule(modules, isFunction, centerX + dx, centerY + dy, dist !== 1);
+        }
+      }
+    }
+
+    function drawCodewords(modules, isFunction, codewords, remainderBits) {
+      const bits = [];
+
+      for (const codeword of codewords) {
+        appendBits(bits, codeword, 8);
+      }
+
+      for (let i = 0; i < remainderBits; i++) {
+        bits.push(0);
+      }
+
+      const size = modules.length;
+      let bitIndex = 0;
+      let upward = true;
+
+      for (let right = size - 1; right >= 1; right -= 2) {
+        if (right === 6) {
+          right--;
+        }
+
+        for (let vert = 0; vert < size; vert++) {
+          const y = upward ? size - 1 - vert : vert;
+
+          for (let j = 0; j < 2; j++) {
+            const x = right - j;
+
+            if (!isFunction[y][x] && bitIndex < bits.length) {
+              modules[y][x] = bits[bitIndex] === 1;
+              bitIndex++;
+            }
+          }
+        }
+
+        upward = !upward;
+      }
+    }
+
+    function applyMask(modules, isFunction, mask) {
+      const size = modules.length;
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (!isFunction[y][x] && maskCondition(mask, x, y)) {
+            modules[y][x] = !modules[y][x];
+          }
+        }
+      }
+    }
+
+    function maskCondition(mask, x, y) {
+      if (mask === 0) {
+        return (x + y) % 2 === 0;
+      }
+
+      return false;
+    }
+
+    function drawFormatBits(modules, isFunction, mask) {
+      const size = modules.length;
+      const eclFormatBits = 1;
+      const data = (eclFormatBits << 3) | mask;
+      let rem = data;
+
+      for (let i = 0; i < 10; i++) {
+        rem = (rem << 1) ^ (((rem >>> 9) & 1) * 0x537);
+      }
+
+      const bits = ((data << 10) | rem) ^ 0x5412;
+
+      for (let i = 0; i <= 5; i++) {
+        setFunctionModule(modules, isFunction, 8, i, getBit(bits, i));
+      }
+
+      setFunctionModule(modules, isFunction, 8, 7, getBit(bits, 6));
+      setFunctionModule(modules, isFunction, 8, 8, getBit(bits, 7));
+      setFunctionModule(modules, isFunction, 7, 8, getBit(bits, 8));
+
+      for (let i = 9; i < 15; i++) {
+        setFunctionModule(modules, isFunction, 14 - i, 8, getBit(bits, i));
+      }
+
+      for (let i = 0; i < 8; i++) {
+        setFunctionModule(modules, isFunction, size - 1 - i, 8, getBit(bits, i));
+      }
+
+      for (let i = 8; i < 15; i++) {
+        setFunctionModule(modules, isFunction, 8, size - 15 + i, getBit(bits, i));
+      }
+
+      setFunctionModule(modules, isFunction, 8, size - 8, true);
+    }
+
+    function drawVersion(modules, isFunction, version) {
+      const size = modules.length;
+      let rem = version;
+
+      for (let i = 0; i < 12; i++) {
+        rem = (rem << 1) ^ (((rem >>> 11) & 1) * 0x1f25);
+      }
+
+      const bits = (version << 12) | rem;
+
+      for (let i = 0; i < 18; i++) {
+        const bit = getBit(bits, i);
+        const a = size - 11 + (i % 3);
+        const b = Math.floor(i / 3);
+
+        setFunctionModule(modules, isFunction, a, b, bit);
+        setFunctionModule(modules, isFunction, b, a, bit);
+      }
+    }
+
+    function drawQrToCanvas(canvas, modules, scale) {
+      const quietZone = 4;
+      const size = modules.length;
+      const pixelSize = (size + quietZone * 2) * scale;
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = pixelSize;
+      canvas.height = pixelSize;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, pixelSize, pixelSize);
+
+      ctx.fillStyle = "#0f172a";
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (modules[y][x]) {
+            ctx.fillRect((x + quietZone) * scale, (y + quietZone) * scale, scale, scale);
+          }
+        }
+      }
+    }
+
+    function reedSolomonRemainder(data, degree) {
+      const divisor = reedSolomonDivisor(degree);
+      const result = Array(degree).fill(0);
+
+      for (const b of data) {
+        const factor = b ^ result.shift();
+        result.push(0);
+
+        for (let i = 0; i < degree; i++) {
+          result[i] ^= gfMultiply(divisor[i], factor);
+        }
+      }
+
+      return result;
+    }
+
+    function reedSolomonDivisor(degree) {
+      let result = [1];
+
+      for (let i = 0; i < degree; i++) {
+        const root = gfPow(2, i);
+        result.push(0);
+
+        for (let j = result.length - 1; j >= 1; j--) {
+          result[j] = result[j - 1] ^ gfMultiply(result[j], root);
+        }
+
+        result[0] = gfMultiply(result[0], root);
+      }
+
+      return result;
+    }
+
+    function gfMultiply(x, y) {
+      let z = 0;
+
+      for (let i = 7; i >= 0; i--) {
+        z = (z << 1) ^ ((z >>> 7) * 0x11d);
+        z ^= ((y >>> i) & 1) * x;
+      }
+
+      return z & 0xff;
+    }
+
+    function gfPow(x, power) {
+      let result = 1;
+
+      for (let i = 0; i < power; i++) {
+        result = gfMultiply(result, x);
+      }
+
+      return result;
+    }
+
+    function appendBits(array, value, length) {
+      for (let i = length - 1; i >= 0; i--) {
+        array.push((value >>> i) & 1);
+      }
+    }
+
+    function getBit(value, index) {
+      return ((value >>> index) & 1) !== 0;
+    }
+
+    function create2D(size, value) {
+      return Array.from({ length: size }, () => Array(size).fill(value));
+    }
+
+    function setFunctionModule(modules, isFunction, x, y, isDark) {
+      modules[y][x] = isDark;
+      isFunction[y][x] = true;
+    }
+
+    function addHistory() {
+      const item = {
+        id: Date.now(),
+        workName: workNameInput.value.trim(),
+        workDate: workDateInput.value,
+        department: departmentInput.value.trim() || "미입력",
+        manager: managerInput.value.trim() || "미입력",
+        memo: memoInput.value.trim() || "없음",
+        mode: qrModeSelect.value,
+        payload: currentPayload
+      };
+
+      history.unshift(item);
+      history = history.slice(0, 8);
+      localStorage.setItem("qrWorkHistoryOffline", JSON.stringify(history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      if (history.length === 0) {
+        historyList.innerHTML = "<div class='placeholder'>아직 생성 이력이 없습니다.</div>";
+        return;
+      }
+
+      historyList.innerHTML = history.map(item => `
+        <div class="history-item">
+          <div>
+            <strong>${escapeHTML(item.workName)}</strong>
+            <span>${item.workDate} · ${escapeHTML(item.department)} · ${escapeHTML(item.manager)}</span>
+          </div>
+          <button class="mini-btn" onclick="loadHistory(${item.id})">불러오기</button>
+        </div>
+      `).join("");
+    }
+
+    function loadHistory(id) {
+      const item = history.find(historyItem => historyItem.id === id);
+
+      if (!item) {
+        return;
+      }
+
+      workNameInput.value = item.workName;
+      workDateInput.value = item.workDate;
+      departmentInput.value = item.department === "미입력" ? "" : item.department;
+      managerInput.value = item.manager === "미입력" ? "" : item.manager;
+      memoInput.value = item.memo === "없음" ? "" : item.memo;
+      qrModeSelect.value = item.mode || "compact";
+
+      generateQR();
+    }
+
+    function copyPayload() {
+      if (!currentPayload) {
+        alert("먼저 QR 코드를 생성해주세요.");
+        return;
+      }
+
+      navigator.clipboard.writeText(currentPayload)
+        .then(() => alert("QR 데이터가 복사되었습니다."))
+        .catch(() => alert("복사에 실패했습니다."));
+    }
+
+    function downloadQR() {
+      if (!currentPayload || qrCanvas.style.display === "none") {
+        alert("먼저 QR 코드를 생성해주세요.");
+        return;
+      }
+
+      const safeName = workNameInput.value.trim().replace(/[\\/:*?\"<>|]/g, "_") || "work_qr";
+      const link = document.createElement("a");
+
+      link.href = qrCanvas.toDataURL("image/png");
+      link.download = `${safeName}_${workDateInput.value || "date"}_offline_qr.png`;
+      link.click();
+    }
+
+    function resetForm() {
+      workNameInput.value = "";
+      departmentInput.value = "";
+      managerInput.value = "";
+      memoInput.value = "";
+      qrModeSelect.value = "compact";
+      currentPayload = "";
+
+      qrCanvas.style.display = "none";
+      placeholder.className = "placeholder";
+      placeholder.style.display = "block";
+      placeholder.innerHTML = "업무 정보를 입력한 뒤<br />QR 생성 버튼을 눌러주세요.";
+      successBox.style.display = "none";
+      payloadPreview.textContent = "아직 생성된 QR 데이터가 없습니다.";
+
+      setToday();
+      workNameInput.focus();
+    }
+
+    function escapeHTML(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    setToday();
+    renderHistory();
+  </script>
+</body>
+</html>
